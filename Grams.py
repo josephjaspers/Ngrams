@@ -1,84 +1,89 @@
 import csv
-import nltk
 import sys
 import copy
 import operator
+import random
 csv.field_size_limit(sys.maxsize)
 
 
 class NGram:
 
-    lst_wordCorpus = ""             # The entire word corpus
-    lst_wordCorpusSet = []          # The set of the word corpus
-    int_corpusLength = 0
-    int_corpusSetLength = 0
-    lst_gramProbabilities = []  # array of maps of gram probabilities ie lst_gramProbabilities[0] returns unigram prob
-    lst_gramCounts = []         # same as above but with counts
+    __lst_wordCorpus = ""             # The entire word corpus
+    __lst_wordCorpusSet = []          # The set of the word corpus
+    __int_corpusLength = 0
+    __int_corpusLengthSet = 0
+    __lstmap_gramProbabilities = []  # array of maps of gram probabilities ie lst_gramProbabilities[0] returns unigram prob
+    __lstmap_gramCounts = []         # same as above but with counts
+    __lstlst_orderedProbLst = []
+    __lstlst_orderedCountLst = []
 
     def __init__(self, lst_word_corpus=[""]):
-        self.lst_wordCorpus = lst_word_corpus
-        self.lst_wordCorpusSet = set(lst_word_corpus)
-        self.int_corpusLength = len(lst_word_corpus)
-        self.int_corpusLengthSet = len(self.lst_wordCorpusSet)
+        self.__lst_wordCorpus = lst_word_corpus
+        self.__lst_wordCorpusSet = set(lst_word_corpus)
+        self.__int_corpusLength = len(lst_word_corpus)
+        self.__int_corpusLengthSet = len(self.__lst_wordCorpusSet)
 
     # ----------------------------Simple Accessors------------------------------------------------#
     # returns a list of maps
-    def get_probabilities(self):
-        return self.lst_gramProbabilities
+    def get_gram_probabilities(self):
+        return self.__lstmap_gramProbabilities
 
     # returns a list of maps
-    def get_counts(self):
-        return self.lst_gramCounts
+    def get_gram_counts(self):
+        return self.__lstmap_gramCounts
+
+    def get_corpus_length(self):
+        return self.__int_corpusLength
+
+    def get_corpus_set_length(self):
+        return self.__int_corpusLengthSet
 
     # These are index base 1 for consistency with length of n-gram
     # Returns the Ngram (probability or count) of the given integer
-    def get_probability_gram(self, int_gram_index):
-        if len(self.lst_gramProbabilities) < int_gram_index:
+    def get_gram_probability(self, int_gram_index):
+        if len(self.__lstmap_gramProbabilities) < int_gram_index:
             self.calculate(int_gram_index)
-        return self.lst_gramProbabilities[int_gram_index - 1]
+        return self.__lstmap_gramProbabilities[int_gram_index - 1]
 
-    def get_count_gram(self, int_gram_index):
-        if len(self.lst_gramCounts) < int_gram_index:
+    def get_gram_count(self, int_gram_index):
+        if len(self.__lstmap_gramCounts) < int_gram_index:
             self.calculate(int_gram_index)
-        return self.lst_gramCounts[int_gram_index - 1]
+        return self.__lstmap_gramCounts[int_gram_index - 1]
 
     # returns a sorted list of pairs from the corresponding probability map
-    def get_probability_gram_ordered(self, int_gram_index):
-        if len(self.lst_gramProbabilities) < int_gram_index:
+    def get_gram_probability_ordered(self, int_gram_index):
+        if len(self.__lstmap_gramProbabilities) < int_gram_index:
             self.calculate(int_gram_index)
 
-        lst_srt_gram_sorted = sorted(self.lst_gramProbabilities[int_gram_index - 1].items(), key=operator.itemgetter(1))
-        lst_srt_gram_sorted.reverse()
-        return lst_srt_gram_sorted
+        return self.__lstlst_orderedProbLstLst[int_gram_index - 1]
 
     # returns a sorted list of pairs from the corresponding probability map
-    def get_count_gram_ordered(self, int_gram_index):
-        if len(self.lst_gramCounts) < int_gram_index:
+    def get_gram_count_ordered(self, int_gram_index):
+        if len(self.__lstmap_gramCounts) < int_gram_index:
             self.calculate(int_gram_index)
 
-        lst_srt_gram_sorted = sorted(self.lst_gramCounts[int_gram_index - 1].items(), key=operator.itemgetter(1))
-        lst_srt_gram_sorted.reverse()
-        return lst_srt_gram_sorted
+        return self.__lstlst_orderedCountLst[int_gram_index - 1]
+
 
     # ----------------------------Simple Mutators------------------------------------------------#
     def set_text(self, lst_word_corpus):
-        self.lst_wordCorpus = lst_word_corpus
-        self.lst_wordCorpusSet = set(lst_word_corpus)
-        self.int_corpusLength = len(lst_word_corpus)
-        self.int_corpusLengthSet = len(self.lst_wordCorpusSet)
+        self.__lst_wordCorpus = lst_word_corpus
+        self.__lst_wordCorpusSet = set(lst_word_corpus)
+        self.__int_corpusLength = len(lst_word_corpus)
+        self.__int_corpusLengthSet = len(self.__lst_wordCorpusSet)
 
     # ---------------------------Private helper method for n gram count--------------------------#
     def __ngram_count(self, int_ngram_length):
         # number of grams in a given text in respect to gram_order
         def numb_grams():
-            return self.int_corpusLength - int_ngram_length
+            return self.__int_corpusLength - int_ngram_length
 
         # get the specific gram at a given text and gram length
         def gram_at(index, gram_index=int_ngram_length): # gram index can also be interperted as gram_length
             if gram_index > 1:
-                return gram_at(index, gram_index - 1) + " " + self.lst_wordCorpus[index + gram_index]
+                return gram_at(index, gram_index - 1) + " " + self.__lst_wordCorpus[index + gram_index]
             else:
-                return self.lst_wordCorpus[index]
+                return self.__lst_wordCorpus[index]
 
         # ---- Actual Function Implementation ---- #
         map_word_count = {}
@@ -90,109 +95,89 @@ class NGram:
             else:
                 map_word_count[gram_at(i)] = 1
 
-        return map_word_count
+        self.__lstmap_gramCounts.append(map_word_count)
 
     # ---- function to calculate the probabilities of all grams of given length in a text ---- #
     # ---- Also calculates all counts and probabilities of the n-grams of length less than the given Length ----#
-    def calculate(self, int_ngram_length):
-        ngram_counts = []
+    # ---- DO NOT GIVE A USER VALUE FOR INT_MIN_COUNT
+    def calculate(self, int_ngram_length, int_min_count=0):
+        # clear everything
+        self.__lstmap_gramCounts = []
+        self.__lstmap_gramProbabilities = []
+        self.__lstlst_orderedCountLst = []
+        self.__lstlst_orderedProbLst = []
 
+        # calculate the count of each gram (IE 3 calculates unigram bigram and trigram)
         for i in range(1, int_ngram_length + 1):
-            ngram_counts.append(self.__ngram_count(i))
+            self.__ngram_count(i)
 
-        ngram_probs = copy.deepcopy(ngram_counts)
+        if int_min_count > 0:
+            lstmap_thresholded = []
+            for _map in self.__lstmap_gramCounts:
+                lstmap_thresholded.append({k : v for k,v in _map.items() if v >= int_min_count})
+            self.__lstmap_gramCounts = lstmap_thresholded
+            print(self.__lstmap_gramCounts)
+
+        for lstmap in self.__lstmap_gramCounts:
+            for k, v in lstmap.items():
+                if lstmap[k] < int_min_count:
+                    del lstmap[k]
+
+        # copy to probabilities
+        self.__lstmap_gramProbabilities = copy.deepcopy(self.__lstmap_gramCounts)
 
         # calculate the probabilities of a unigram
-        for k, v in ngram_probs[0].items():
-            ngram_probs[0][k] = v / self.int_corpusLength           # divide by corpus length to get unigram prob
+        for k, v in self.__lstmap_gramProbabilities[0].items():
+            self.__lstmap_gramProbabilities[0][k] = v / self.__int_corpusLength           # divide by corpus length to get unigram prob
 
         # calculate the remaining probabilities of the ngrams
-        for i in range(1, len(ngram_probs)):
-            int_total_grams = self.int_corpusLength - int_ngram_length
-            for k, count in ngram_probs[i].items():
-                # first we divide by the total number of n grams, and then by the probability of the n_gram below it
-                # P(W_n-1 | W_n) = count / int_total_grams
-                # P(W_n-1) =  ngram_probs[i - 1][" ".join(k.split(' ')[0:i])]
-                # ergo....   P(W_n-1 | W_n) / P(W_n-1) == count / ngram_probs[i - 1][" ".join(k.split(' ')[0:i])] / int_total_grams
-                ngram_probs[i][k] = count / ngram_probs[i - 1][" ".join(k.split(' ')[0:i])] / int_total_grams
+        for i in range(1, len(self.__lstmap_gramProbabilities)):
+            for k, count in self.__lstmap_gramProbabilities[i].items():
+                self.__lstmap_gramProbabilities[i][k] = count / self.__lstmap_gramCounts[i - 1][" ".join(k.split(' ')[0:i])]
 
-        self.lst_gramProbabilities = ngram_probs
-        self.lst_gramCounts = ngram_counts
-        return ngram_probs
+        # for each gram -sort the count and  probability lists and store
+        for n_gram in self.__lstmap_gramProbabilities:
+            self.__lstlst_orderedProbLst.append(sorted(n_gram.items(), key=operator.itemgetter(1)))
 
+        for n_gram in self.__lstmap_gramCounts:
+            self.__lstlst_orderedCountLst.append(sorted(n_gram.items(), key=operator.itemgetter(1)))
 
-def file_to_string(column_lst, *filenames):
-    str_combined = ""
-    for fname in filenames:
-        with open(fname) as csvfile:
-            article = csv.reader(csvfile)
-            for row in article:
-                str_combined += '\n'
-                for i in column_lst:
-                    str_combined += row[i]
-    return str_combined
+        return self.__lstmap_gramProbabilities
 
+    def random_sentence_base(self, int_gram):
+        # returns a random subphrase in the corpus
 
-# removes punctuation and lowercases
-def normalize(str_data):
-    # There are like 7 versions of apostrophes in python
-    punctuation = [',', '.', '.', '"', "'", '/', '?', '!', '/', ':', "'", '’', '‘', '- ', ' -', ' - ', '-', ' -', ' -']
-    str_data = "".join([char for char in str_data if char not in punctuation])
-    str_data = str_data.lower()
+        if int_gram > len(self.__lstmap_gramCounts):
+            self.calculate(int_gram)
 
-    return str_data
+        sz = len(self.__lstmap_gramCounts[int_gram - 1])
+        base = self.__lstlst_orderedCountLst[int_gram - 1][random.randint(0, sz)][0]
+        return ' '.join(base.split(' ')[0:-1])  # get a base phrase the size of the gram - 1
 
+    def random_sentence_next(self, curr_sentence, int_gram):
 
-TEXT_COL_INDEX = 2
-print("reading f1 (news)")
-str_news = file_to_string([TEXT_COL_INDEX], "/home/joseph/Documents/NLP_Grams/all-the-news/articles1.csv")
-print("reading f2 (news)")
-str_news += file_to_string([TEXT_COL_INDEX], "/home/joseph/Documents/NLP_Grams/all-the-news/articles2.csv")
-print("reading f3 (news)")
-str_news += file_to_string([TEXT_COL_INDEX], "/home/joseph/Documents/NLP_Grams/all-the-news/articles3.csv")
-print("reading f4 (wine)")
-str_wine = file_to_string([TEXT_COL_INDEX], "/home/joseph/Documents/NLP_Grams/wine-reviews/winemag-data-130k-v2.csv")
-print("reading f5 (wine)")
-str_wine += file_to_string([TEXT_COL_INDEX], "/home/joseph/Documents/NLP_Grams/wine-reviews/winemag-data_first150k.csv")
+        def pair_list_sum(pair_lst):
+            return sum([pair[1] for pair in pair_lst])
 
+        def last(str_):
+            return str_.split(' ')[-1]
 
-print("normalizing the data ")
-news_text = normalize(str_news)
-wine_text = normalize(str_wine)
-print("Tokenized the string")
-news_tokenized = nltk.word_tokenize(news_text)
-wine_tokenized = nltk.word_tokenize(wine_text)
+        def get_random_word(pair_lst):
+            random_position = random.random() * pair_list_sum(pair_lst)
+            flt_pos = 0
 
-print("\n")
-print("------------------------Calculating for news_text------------------------")
-myGram = NGram(news_tokenized)
-myGram.calculate(3)     # calculate the ngram count and probabilities from length 1 to 3 (inclusive)
-                        # use calculate first as it caches all the values from unigram-to the given n gram]
+            for i in range(0, len(pair_lst)):
+                if i + 1 == len(pair_lst):
+                    return pair_lst[i][0]
 
-print("\n------------Probability and Count of news (trigram)------------")
-print(myGram.get_probability_gram_ordered(3)[0:10])
-print(myGram.get_count_gram_ordered(3)[0:10])
-print("\n------------Probability and Count of news (bigram)------------")
-print(myGram.get_probability_gram_ordered(2)[0:10])
-print(myGram.get_count_gram_ordered(2)[0:10])
-print("\n------------Probability and Count of news (unigram)------------")
-print(myGram.get_probability_gram_ordered(1)[0:10])
-print(myGram.get_count_gram_ordered(1)[0:10])
+                if (flt_pos >= random_position) and (flt_pos <= random_position + pair_lst[i + 1][1]):
+                    return pair_lst[i][0]
+                flt_pos += pair_lst[i][1]
 
-print("\n \n------------------------Recalculating for wine_text------------------------")
-myGram.set_text(wine_text)
-myGram.calculate(3)
+            return ' '
 
-print("\n------------Probability and Count of wine (trigram)------------")
-print(myGram.get_probability_gram_ordered(3)[0:10])
-print(myGram.get_count_gram_ordered(3)[0:10])
-print("\n------------Probability and Count of wine (bigram)------------")
-print(myGram.get_probability_gram_ordered(2)[0:10])
-print(myGram.get_count_gram_ordered(2)[0:10])
-print("\n------------Probability and Count of wine (unigram)------------")
-print(myGram.get_probability_gram_ordered(1)[0:10])
-print(myGram.get_count_gram_ordered(1)[0:10])
+        relevant_sent = ' '.join(curr_sentence.split(' ')[-int_gram:])
+        possible_words = [(last(k), v) for k, v in self.__lstlst_orderedCountLst[int_gram - 1] if k[0:len(relevant_sent)] == relevant_sent]
 
-
-
+        return get_random_word(possible_words)
 
