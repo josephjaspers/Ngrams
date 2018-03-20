@@ -1,3 +1,7 @@
+Last Updated: March 20, 2018
+Author: JosephJaspers
+
+
 The class stores the following data which is accessible through simple get methods:
 	
     __lst_wordCorpus = ""             # The entire word corpus
