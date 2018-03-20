@@ -7,14 +7,14 @@ The Recursive implementation enables the short script to scale to any order of N
 
 The class stores the following data which is accessible through simple get methods:
 	
-    __lst_wordCorpus = ""             # The entire word corpus
-    __lst_wordCorpusSet = []          # The set of the word corpus
-    __int_corpusLength = 0	       # length of the entire corpus
-    __int_corpusLengthSet = 0	     # length of the set of the corpus (unique words)
-    __lstmap_gramProbabilities = []   # list of maps corresponding to every gram in the corpus and their probabilities 
-    __lstmap_gramCounts = []          # list of maps corresponding to every gram in the corpus and their probabilities 
-    __lstlst_orderedProbLst = []      # list of pairs (ordered greatest to least by probability) of same word,probability relationship
-    __lstlst_orderedCountLst = []     # list of pairs (ordered greatest to least by count) of same word,count relationship
+    __lst_wordCorpus = ""             	# The entire word corpus
+    __lst_wordCorpusSet = []          	# The set of the word corpus
+    __int_corpusLength = 0			# length of the entire corpus
+    __int_corpusLengthSet = 0		# length of the set of the corpus (unique words)
+    __lstmap_gramProbabilities = []   	# list of maps corresponding to every gram in the corpus and their probabilities 
+    __lstmap_gramCounts = []          	# list of maps corresponding to every gram in the corpus and their probabilities 
+    __lstlst_orderedProbLst = []      	# list of pairs (ordered greatest to least by probability) of same word,probability relationship
+    __lstlst_orderedCountLst = []     	# list of pairs (ordered greatest to least by count) of same word,count relationship
 
 The method list is as follows:
 
