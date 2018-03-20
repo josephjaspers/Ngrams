@@ -5,6 +5,8 @@ NGrams is a simple script used to calculate nGrams from a given text corpus (a l
 The NGrams itself does not do any text processing on the data itself and simply calculates the ngrams.
 The Recursive implementation enables the short script to scale to any order of NGrams. 
 
+*The projectRun.py file utilizes NLTK for tokenization, though the NGram script itself is Standard Python3*
+
 The class stores the following data which is accessible through simple get methods:
 	
     __lst_wordCorpus = ""             	# The entire word corpus
